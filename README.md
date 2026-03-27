@@ -2,7 +2,7 @@
 
 > A retro pixel-style word game site with three classic game modes — playable solo or with a friend.
 
-**Live demo:** `https://kasviii.github.io/pixel-words`
+**Live demo:** [https://kasviii.github.io/pixel-words](https://kasviii.github.io/pixel-words)
 
 ---
 
