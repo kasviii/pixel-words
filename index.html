@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIXEL WORDS</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0a0f;--panel:#12121a;--border:#2a2a3a;--green:#00ff88;--yellow:#ffd700;--red:#ff4466;--blue:#44aaff;--purple:#bb66ff;--white:#e8e8f0;--dim:#555570;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--white);font-family:'Press Start 2P',monospace;min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);pointer-events:none;z-index:9999;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+@keyframes slideIn{from{transform:translateY(-16px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-8px)}40%{transform:translateX(8px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
+@keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.18)}100%{transform:scale(1)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+#screen{max-width:680px;margin:0 auto;padding:24px 16px 60px;}
+
+/* HEADER */
+header{text-align:center;margin-bottom:28px;}
+.logo{font-size:20px;color:var(--green);text-shadow:3px 3px 0 #006644,0 0 28px rgba(0,255,136,0.4);letter-spacing:3px;line-height:1.5;}
+.logo span{color:var(--yellow);text-shadow:3px 3px 0 #886600,0 0 24px rgba(255,215,0,0.35);}
+.cursor{display:inline-block;width:13px;height:20px;background:var(--green);animation:blink 1s infinite;vertical-align:middle;margin-left:4px;}
+.tagline{font-family:'VT323',monospace;font-size:19px;color:var(--dim);margin-top:8px;letter-spacing:2px;}
+.score-bar{display:flex;justify-content:center;gap:20px;margin-top:12px;flex-wrap:wrap;}
+.score-item{font-family:'VT323',monospace;font-size:17px;}
+.score-item span{color:var(--green);}
+
+/* MENU */
+.menu-title{font-family:'VT323',monospace;font-size:24px;color:var(--dim);text-align:center;margin-bottom:18px;letter-spacing:3px;}
+.modes{display:grid;gap:12px;}
+.mode-btn{background:var(--panel);border:3px solid var(--border);color:var(--white);padding:16px 18px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:8px;text-align:left;display:flex;align-items:center;gap:14px;box-shadow:4px 4px 0 #000;transition:all 0.1s;position:relative;width:100%;}
+.mode-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000;}
+.mode-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;}
+.mode-btn.wordle{border-color:var(--green);}
+.mode-btn.hangman{border-color:var(--red);}
+.mode-btn.scramble{border-color:var(--purple);}
+.mode-btn.wordle:hover{background:rgba(0,255,136,0.06);}
+.mode-btn.hangman:hover{background:rgba(255,68,102,0.06);}
+.mode-btn.scramble:hover{background:rgba(187,102,255,0.06);}
+.mode-icon{font-size:26px;flex-shrink:0;}
+.mode-info .mode-name{margin-bottom:5px;}
+.mode-btn.wordle .mode-name{color:var(--green);}
+.mode-btn.hangman .mode-name{color:var(--red);}
+.mode-btn.scramble .mode-name{color:var(--purple);}
+.mode-desc{font-family:'VT323',monospace;font-size:16px;color:var(--dim);line-height:1.4;}
+.mode-tag{position:absolute;right:12px;top:12px;font-family:'VT323',monospace;font-size:12px;padding:2px 7px;border:1px solid;}
+.mode-btn.wordle .mode-tag{color:var(--green);border-color:var(--green);}
+.mode-btn.hangman .mode-tag{color:var(--red);border-color:var(--red);}
+.mode-btn.scramble .mode-tag{color:var(--purple);border-color:var(--purple);}
+
+/* PLAYER SELECT SCREEN */
+.player-select{animation:slideIn 0.3s ease;}
+.ps-title{font-family:'VT323',monospace;font-size:22px;color:var(--dim);text-align:center;margin-bottom:20px;letter-spacing:2px;}
+.ps-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+.ps-btn{background:var(--panel);border:3px solid var(--border);color:var(--white);padding:24px 16px;cursor:pointer;font-family:'Press Start 2P',monospace;font-size:8px;text-align:center;box-shadow:4px 4px 0 #000;transition:all 0.1s;display:flex;flex-direction:column;align-items:center;gap:10px;}
+.ps-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000;}
+.ps-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;}
+.ps-btn.solo{border-color:var(--blue);}
+.ps-btn.solo:hover{background:rgba(68,170,255,0.06);}
+.ps-btn.duo{border-color:var(--yellow);}
+.ps-btn.duo:hover{background:rgba(255,215,0,0.06);}
+.ps-icon{font-size:32px;}
+.ps-label{color:var(--blue);}
+.ps-btn.duo .ps-label{color:var(--yellow);}
+.ps-sub{font-family:'VT323',monospace;font-size:15px;color:var(--dim);line-height:1.4;}
+
+/* P1 WORD ENTRY SCREEN */
+.p1-screen{animation:slideIn 0.3s ease;}
+.p1-title{font-family:'VT323',monospace;font-size:22px;text-align:center;margin-bottom:6px;letter-spacing:2px;}
+.p1-title.green{color:var(--green);}
+.p1-title.red{color:var(--red);}
+.p1-title.purple{color:var(--purple);}
+.p1-sub{font-family:'VT323',monospace;font-size:17px;color:var(--dim);text-align:center;margin-bottom:20px;}
+.p1-input-wrap{position:relative;margin-bottom:14px;}
+.p1-input{width:100%;background:var(--panel);border:3px solid var(--border);color:var(--white);font-family:'Press Start 2P',monospace;font-size:14px;padding:14px 48px 14px 14px;outline:none;box-shadow:4px 4px 0 #000;letter-spacing:4px;text-transform:uppercase;}
+.p1-input:focus{box-shadow:4px 4px 0 #000,0 0 14px rgba(255,255,255,0.1);}
+.p1-toggle{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:transparent;border:none;cursor:pointer;font-size:18px;color:var(--dim);}
+.p1-toggle:hover{color:var(--white);}
+.p1-error{font-family:'VT323',monospace;font-size:17px;color:var(--red);text-align:center;margin-bottom:10px;min-height:22px;}
+.p1-hint{font-family:'VT323',monospace;font-size:15px;color:var(--dim);text-align:center;margin-bottom:16px;}
+.p1-hint span{color:var(--yellow);}
+.handoff-screen{text-align:center;padding:30px 20px;animation:slideIn 0.3s ease;}
+.handoff-icon{font-size:48px;margin-bottom:16px;}
+.handoff-title{font-family:'VT323',monospace;font-size:28px;color:var(--yellow);margin-bottom:8px;}
+.handoff-sub{font-family:'VT323',monospace;font-size:18px;color:var(--dim);margin-bottom:24px;line-height:1.5;}
+
+/* GAME AREA */
+#game-area{display:none;animation:slideIn 0.3s ease;}
+.game-nav{display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.back-btn{background:transparent;border:2px solid var(--dim);color:var(--dim);font-family:'Press Start 2P',monospace;font-size:6px;padding:7px 10px;cursor:pointer;box-shadow:2px 2px 0 #000;transition:all 0.1s;}
+.back-btn:hover{border-color:var(--white);color:var(--white);transform:translate(-1px,-1px);box-shadow:3px 3px 0 #000;}
+.game-title{font-size:10px;flex:1;}
+.game-title.green{color:var(--green);text-shadow:2px 2px 0 #006644;}
+.game-title.red{color:var(--red);text-shadow:2px 2px 0 #880022;}
+.game-title.purple{color:var(--purple);text-shadow:2px 2px 0 #550088;}
+.player-badge{font-family:'VT323',monospace;font-size:15px;padding:3px 10px;border:1px solid;border-radius:2px;}
+.player-badge.p2{color:var(--yellow);border-color:var(--yellow);}
+.player-badge.solo{color:var(--blue);border-color:var(--blue);}
+.diff-row{display:flex;gap:8px;justify-content:center;margin-bottom:14px;}
+.diff-btn{padding:6px 10px;font-family:'Press Start 2P',monospace;font-size:6px;border:2px solid var(--dim);background:transparent;color:var(--dim);cursor:pointer;box-shadow:2px 2px 0 #000;transition:all 0.1s;}
+.diff-btn.active{border-color:var(--yellow);color:var(--yellow);}
+.diff-btn:hover{border-color:var(--white);color:var(--white);}
+
+/* WORDLE */
+#wordle-grid{display:grid;grid-template-rows:repeat(6,1fr);gap:5px;margin:0 auto 18px;max-width:320px;}
+.wordle-row{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;}
+.wordle-cell{aspect-ratio:1;background:var(--panel);border:3px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:15px;box-shadow:3px 3px 0 #000;transition:border-color 0.1s;}
+.wordle-cell.active-row{border-color:var(--dim);}
+.wordle-cell.filled{border-color:var(--white);animation:pop 0.15s ease;}
+.wordle-cell.correct{background:#1a4a2a;border-color:var(--green);color:var(--green);}
+.wordle-cell.present{background:#4a3a00;border-color:var(--yellow);color:var(--yellow);}
+.wordle-cell.absent{background:#1a1a22;border-color:#2a2a2a;color:var(--dim);}
+#wordle-keys{display:flex;flex-direction:column;gap:5px;align-items:center;}
+.key-row{display:flex;gap:4px;}
+.key{background:#1e1e2a;border:2px solid #333;color:var(--white);font-family:'Press Start 2P',monospace;font-size:6px;padding:9px 7px;cursor:pointer;min-width:32px;text-align:center;box-shadow:2px 2px 0 #000;transition:all 0.1s;}
+.key:hover{transform:translateY(-1px);box-shadow:2px 3px 0 #000;}
+.key:active{transform:translateY(1px);}
+.key.wide{min-width:50px;font-size:5px;}
+.key.correct{background:#1a4a2a;border-color:var(--green);color:var(--green);}
+.key.present{background:#4a3a00;border-color:var(--yellow);color:var(--yellow);}
+.key.absent{background:#111;border-color:#222;color:#333;}
+
+/* HANGMAN */
+#hangman-canvas{display:block;margin:0 auto 14px;}
+.word-display{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-bottom:18px;}
+.letter-slot{width:30px;height:38px;border-bottom:3px solid var(--red);display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 3px 0 #880022;}
+.hangman-alpha{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:400px;margin:0 auto;}
+.alpha-key{width:36px;height:36px;background:var(--panel);border:2px solid #333;color:var(--white);font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:2px 2px 0 #000;transition:all 0.1s;}
+.alpha-key:hover:not(:disabled){transform:translateY(-1px);border-color:var(--red);color:var(--red);}
+.alpha-key:disabled{opacity:0.3;cursor:not-allowed;}
+.alpha-key.wrong{border-color:var(--red);color:var(--red);background:rgba(255,68,102,0.1);}
+.alpha-key.right{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.1);}
+.lives-bar{display:flex;gap:5px;justify-content:center;margin-bottom:14px;}
+.life{width:15px;height:15px;background:var(--red);box-shadow:2px 2px 0 #880022;transition:all 0.3s;}
+.life.lost{background:#222;box-shadow:2px 2px 0 #000;}
+
+/* SCRAMBLE */
+.timer-bar{height:6px;background:#1a1a22;border:2px solid #333;margin-bottom:14px;box-shadow:2px 2px 0 #000;}
+.timer-fill{height:100%;background:var(--purple);transition:width 1s linear;}
+.scramble-word{font-size:18px;color:var(--purple);text-align:center;letter-spacing:7px;margin:16px 0;text-shadow:3px 3px 0 #550088,0 0 18px rgba(187,102,255,0.35);animation:pop 0.3s ease;}
+.scramble-hint-txt{font-family:'VT323',monospace;font-size:17px;color:var(--dim);text-align:center;margin-bottom:14px;min-height:22px;}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0;}
+.stat-cell{background:var(--panel);border:2px solid var(--border);padding:10px 6px;text-align:center;box-shadow:2px 2px 0 #000;}
+.stat-num{font-size:18px;color:var(--green);}
+.stat-lbl{font-family:'VT323',monospace;font-size:13px;color:var(--dim);margin-top:3px;}
+.scramble-input-row{display:flex;gap:8px;margin-bottom:12px;}
+.scramble-input{flex:1;background:var(--panel);border:3px solid var(--purple);color:var(--purple);font-family:'Press Start 2P',monospace;font-size:12px;padding:11px;outline:none;box-shadow:4px 4px 0 #000;letter-spacing:3px;text-transform:uppercase;}
+.scramble-input::placeholder{color:var(--dim);font-size:8px;}
+.scramble-input:focus{box-shadow:4px 4px 0 #000,0 0 10px rgba(187,102,255,0.25);}
+
+/* SHARED */
+.px-btn{background:var(--panel);border:3px solid;font-family:'Press Start 2P',monospace;font-size:7px;padding:11px 14px;cursor:pointer;box-shadow:4px 4px 0 #000;transition:all 0.1s;color:var(--white);}
+.px-btn:hover{transform:translate(-2px,-2px);box-shadow:6px 6px 0 #000;}
+.px-btn:active{transform:translate(2px,2px);box-shadow:2px 2px 0 #000;}
+.px-btn.green{border-color:var(--green);color:var(--green);}
+.px-btn.green:hover{background:rgba(0,255,136,0.07);}
+.px-btn.purple{border-color:var(--purple);color:var(--purple);}
+.px-btn.purple:hover{background:rgba(187,102,255,0.07);}
+.px-btn.red{border-color:var(--red);color:var(--red);}
+.px-btn.red:hover{background:rgba(255,68,102,0.07);}
+.px-btn.yellow{border-color:var(--yellow);color:var(--yellow);}
+.px-btn.yellow:hover{background:rgba(255,215,0,0.07);}
+.px-btn.blue{border-color:var(--blue);color:var(--blue);}
+.px-btn.blue:hover{background:rgba(68,170,255,0.07);}
+.msg-box{text-align:center;padding:12px;margin:10px 0;font-family:'VT323',monospace;font-size:20px;border:3px solid;box-shadow:4px 4px 0 #000;display:none;}
+.msg-box.win{border-color:var(--green);color:var(--green);background:rgba(0,255,136,0.05);}
+.msg-box.lose{border-color:var(--red);color:var(--red);background:rgba(255,68,102,0.05);}
+.msg-box.info{border-color:var(--yellow);color:var(--yellow);background:rgba(255,215,0,0.05);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:10px;}
+.shake{animation:shake 0.4s ease;}
+#confetti-cv{position:fixed;top:0;left:0;width:100%;pointer-events:none;z-index:9998;}
+</style>
+</head>
+<body>
+<canvas id="confetti-cv"></canvas>
+<div id="screen">
+
+  <header>
+    <div class="logo">PIXEL<span>WORDS</span><div class="cursor"></div></div>
+    <div class="tagline">&gt; SELECT YOUR CHALLENGE_</div>
+    <div class="score-bar">
+      <div class="score-item">WINS: <span id="total-wins">0</span></div>
+      <div class="score-item">STREAK: <span id="total-streak">0</span></div>
+      <div class="score-item">BEST: <span id="total-best">0</span></div>
+    </div>
+  </header>
+
+  <!-- MENU -->
+  <div id="menu">
+    <div class="menu-title">&gt; CHOOSE MODE</div>
+    <div class="modes">
+      <button class="mode-btn wordle" onclick="pickMode('wordle')">
+        <div class="mode-icon">🟩</div>
+        <div class="mode-info"><div class="mode-name">WORDLE</div><div class="mode-desc">Guess the 5-letter word in 6 tries. Color clues guide you.</div></div>
+        <div class="mode-tag">DAILY WORD</div>
+      </button>
+      <button class="mode-btn hangman" onclick="pickMode('hangman')">
+        <div class="mode-icon">💀</div>
+        <div class="mode-info"><div class="mode-name">HANGMAN</div><div class="mode-desc">Guess letters before the figure is complete. 7 lives.</div></div>
+        <div class="mode-tag">7 LIVES</div>
+      </button>
+      <button class="mode-btn scramble" onclick="pickMode('scramble')">
+        <div class="mode-icon">🔀</div>
+        <div class="mode-info"><div class="mode-name">SCRAMBLE</div><div class="mode-desc">Unscramble the word before time runs out.</div></div>
+        <div class="mode-tag">TIMED</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- PLAYER SELECT -->
+  <div id="player-select" style="display:none" class="player-select">
+    <div class="ps-title" id="ps-title">&gt; HOW MANY PLAYERS?</div>
+    <div class="ps-grid">
+      <button class="ps-btn solo" onclick="chooseMode(false)">
+        <div class="ps-icon">🤖</div>
+        <div class="ps-label">1 PLAYER</div>
+        <div class="ps-sub">Play vs computer. Random words every round.</div>
+      </button>
+      <button class="ps-btn duo" onclick="chooseMode(true)">
+        <div class="ps-icon">👥</div>
+        <div class="ps-label">2 PLAYERS</div>
+        <div class="ps-sub">Player 1 sets the word. Player 2 tries to guess it!</div>
+      </button>
+    </div>
+    <div class="btn-row" style="margin-top:16px"><button class="px-btn" style="border-color:var(--dim);color:var(--dim)" onclick="showMenu()">◀ BACK</button></div>
+  </div>
+
+  <!-- P1 WORD ENTRY -->
+  <div id="p1-screen" style="display:none" class="p1-screen">
+    <div class="p1-title" id="p1-title"></div>
+    <div class="p1-sub" id="p1-sub"></div>
+    <div class="p1-input-wrap">
+      <input class="p1-input" id="p1-input" type="password" maxlength="20" placeholder="TYPE HERE..." autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')p1Submit()">
+      <button class="p1-toggle" id="p1-toggle" onclick="toggleP1Vis()">👁</button>
+    </div>
+    <div class="p1-error" id="p1-error"></div>
+    <div class="p1-hint" id="p1-hint"></div>
+    <div class="btn-row">
+      <button class="px-btn green" id="p1-submit-btn" onclick="p1Submit()">SET WORD ▶</button>
+      <button class="px-btn" style="border-color:var(--dim);color:var(--dim)" onclick="showPlayerSelect()">◀ BACK</button>
+    </div>
+  </div>
+
+  <!-- HANDOFF SCREEN -->
+  <div id="handoff-screen" style="display:none" class="handoff-screen">
+    <div class="handoff-icon">🔄</div>
+    <div class="handoff-title">PASS TO PLAYER 2!</div>
+    <div class="handoff-sub" id="handoff-sub">Word is set.<br>Hand the device to Player 2.</div>
+    <button class="px-btn yellow" onclick="startActualGame()" style="font-size:9px;padding:14px 20px;">PLAYER 2 READY ▶</button>
+  </div>
+
+  <!-- GAME AREA -->
+  <div id="game-area">
+    <div class="game-nav">
+      <button class="back-btn" onclick="showMenu()">◀ MENU</button>
+      <div class="game-title" id="game-title"></div>
+      <div class="player-badge" id="player-badge"></div>
+    </div>
+    <div class="diff-row" id="diff-row">
+      <button class="diff-btn active" onclick="setDiff('easy',this)">EASY</button>
+      <button class="diff-btn" onclick="setDiff('medium',this)">MED</button>
+      <button class="diff-btn" onclick="setDiff('hard',this)">HARD</button>
+    </div>
+
+    <!-- WORDLE GAME -->
+    <div id="wordle-area" style="display:none">
+      <div id="wordle-grid"></div>
+      <div class="msg-box" id="wordle-msg"></div>
+      <div class="btn-row" id="wordle-btns" style="display:none">
+        <button class="px-btn green" onclick="restartCurrent()">PLAY AGAIN ↻</button>
+        <button class="px-btn blue" onclick="showMenu()">MENU</button>
+      </div>
+      <div id="wordle-keys">
+        <div class="key-row" id="kr1"></div>
+        <div class="key-row" id="kr2"></div>
+        <div class="key-row" id="kr3"></div>
+      </div>
+    </div>
+
+    <!-- HANGMAN GAME -->
+    <div id="hangman-area" style="display:none">
+      <div class="lives-bar" id="lives-bar"></div>
+      <canvas id="hangman-canvas" width="220" height="200"></canvas>
+      <div class="word-display" id="word-display"></div>
+      <div class="hangman-alpha" id="hangman-alpha"></div>
+      <div class="msg-box" id="hangman-msg"></div>
+      <div class="btn-row" id="hangman-btns" style="display:none">
+        <button class="px-btn red" onclick="restartCurrent()">PLAY AGAIN ↻</button>
+        <button class="px-btn blue" onclick="showMenu()">MENU</button>
+      </div>
+    </div>
+
+    <!-- SCRAMBLE GAME -->
+    <div id="scramble-area" style="display:none">
+      <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+      <div class="scramble-word" id="scramble-word"></div>
+      <div class="scramble-hint-txt" id="scramble-hint-txt"></div>
+      <div class="stats-row">
+        <div class="stat-cell"><div class="stat-num" id="sc-score">0</div><div class="stat-lbl">SCORE</div></div>
+        <div class="stat-cell"><div class="stat-num" id="sc-streak">0</div><div class="stat-lbl">STREAK</div></div>
+        <div class="stat-cell"><div class="stat-num" id="sc-time">30</div><div class="stat-lbl">TIME</div></div>
+      </div>
+      <div class="scramble-input-row">
+        <input class="scramble-input" id="scramble-input" placeholder="TYPE ANSWER..." maxlength="20" autocomplete="off" spellcheck="false" oninput="this.value=this.value.toUpperCase()">
+        <button class="px-btn purple" onclick="checkScramble()">GO</button>
+      </div>
+      <div class="btn-row">
+        <button class="px-btn yellow" onclick="scrambleHint()" id="hint-btn">HINT -5pts</button>
+        <button class="px-btn purple" onclick="scrambleSkip()">SKIP</button>
+      </div>
+      <div class="msg-box" id="scramble-msg"></div>
+    </div>
+  </div>
+
+</div><!-- /screen -->
+
+<script>
+// ═══════════════════════════════════════
+// WORD BANKS
+// ═══════════════════════════════════════
+const WORDS={
+  easy:{
+    wordle:['PLANT','BRUSH','CHAIN','DREAM','FLAME','GRACE','HEART','JUICE','KNIFE','LEMON','MOUSE','NIGHT','OCEAN','PEACE','QUEEN','RIVER','SMOKE','TIGER','UNCLE','VOICE','WATER','YOUTH','ZEBRA','CRANE','DANCE','EARTH','FROST','GHOST','HONEY','INDEX','JEWEL','LIGHT','MAGIC','NOISE','OLIVE','PRICE','RADIO','STORM','TRAIN','VAPOR','WASTE','ANGEL','BRIDE','CLOCK','BREAD','CHESS','DAIRY','FENCE','GLASS','HAVEN'],
+    hang:['APPLE','BRAVE','CLOUD','DANCE','EAGLE','FLAME','GRAPE','HAPPY','IMAGE','JUDGE','KNIFE','LEMON','MAGIC','NIGHT','OCEAN','PEACE','QUEEN','RIVER','SMILE','TIGER','UNION','VOICE','WATER','YOUNG','CANDY','BLANK','CEDAR','EIGHT','HORSE','KITTY','MARCH','NERVE','ORBIT','PLANT','REALM','SUNNY','TOUCH','WITCH','YARN','BERRY','CHAIR','DRAMA','FLUTE','GLOBE','IVORY'],
+    scramble:['APPLE','BRAVE','CLOUD','DANCE','EAGLE','FLAME','GRAPE','HAPPY','IMAGE','JUDGE','KNIFE','LEMON','MAGIC','NIGHT','OCEAN','PEACE','QUEEN','RIVER','SMILE','TIGER','UNION','VOICE','WATER','YOUNG','CANDY','BLANK','CEDAR','EIGHT','HORSE','KITTY']
+  },
+  medium:{
+    wordle:['ABBEY','BLAZE','CRISP','DEPOT','ELBOW','FORGE','GRIND','HAVOC','IGLOO','JAUNT','KARMA','LATCH','MANOR','NOVEL','OPTIC','PLUMB','QUIRK','RAVEN','SCALP','TROUT','ULCER','VISOR','WALTZ','ABYSS','YACHT','ZESTY','BIRCH','CHASM','DEPTH','EPOCH','FLINT','GNOME','HAZEL','INEPT','JOUST','KNAVE','LIMBO','MIRTH','NOTCH','PROXY','ROGUE','TAUNT','VAULT','WHIRL','CRIMP','DROSS','EXTOL','FROND','GLARE','HOIST'],
+    hang:['BLAZE','CRISP','DEPOT','ELBOW','FORGE','GRIND','HAVOC','JAUNT','KARMA','LATCH','MANOR','NOVEL','OPTIC','PLUMB','QUIRK','RAVEN','SCALP','TROUT','ULCER','VISOR','WALTZ','ABYSS','YACHT','ZESTY','BIRCH','CHASM','DEPTH','EPOCH','FLINT','GNOME','HAZEL','INEPT','JOUST','KNAVE','LIMBO','MIRTH','NOTCH','PROXY','ROGUE','TAUNT','VAULT','WHIRL','CRANE','DWARF','ENVOY'],
+    scramble:['BLIZZARD','CALENDAR','CHAMPION','DAUGHTER','ELEPHANT','FESTIVAL','GRAPHITE','HOSPITAL','JEALOUSY','KEYBOARD','LANGUAGE','MECHANIC','NOTEBOOK','OBSTACLE','PLATFORM','QUANTITY','REGIMENT','SATURDAY','TOGETHER','UMBRELLA','VALUABLE','WHATEVER','EXERCISE','YOURSELF','ABSOLUTE']
+  },
+  hard:{
+    wordle:['AFFIX','BUXOM','CYNIC','EXPEL','FJORD','GLYPH','HYDRA','JAZZY','KNEEL','LYRIC','MYRRH','NYMPH','OXIDE','PIXEL','QUERY','RETCH','TRYST','UNZIP','VYING','WRYLY','ABUZZ','BYWAY','CZECH','DELVE','EXTOL','FEWER','GAWKY','IRKED','JADED','KNACK','LUMPY','MAXIM','NIXED','SQUAB','THYME','VODKA','WALTZ','ZAPPY','QUIRK','JUMPY','WHACK','PLUMB','FROZE','CRYPT','DWARF','EXPEL','FJORD','GLYPH','KAZOO','LYMPH'],
+    hang:['RHYTHM','SPHINX','SQUAWK','SYZYGY','TROUGH','LYMPH','NYMPH','PYGMY','TRYST','GLYPH','CRYPT','FLYBY','GYPSY','LYNCH','MYRRH','PSYCH','SYNTH','WRYLY','GRIFT','THROB','SCRAWL','BLOTCH','QUARTZ','GLAZED','PHLEGM','FJORDS','KNELT','SWAMP','BRISK','CRIMP'],
+    scramble:['ALGORITHM','BANKRUPTCY','CONSEQUENCE','DEVELOPMENT','ELECTRICITY','FUNDAMENTAL','GOVERNMENT','HYPOTHESIS','IMPOSSIBLE','JOURNALISM','LEGISLATURE','MANUFACTURE','NEIGHBORHOOD','OPPORTUNITY','PHILOSOPHER','RESPONSIBLE','SUSTAINABLE','TEMPERATURE','UNDERGROUND','VEGETABLES','WAVELENGTH','XENOPHOBIA','YOUNGSTERS','ZOOLOGICAL','ARCHITECTURE']
+  }
+};
+const HINTS={
+  easy:{APPLE:'A red or green fruit',BRAVE:'Showing courage',CLOUD:'Floats in the sky',DANCE:'Move to the beat',EAGLE:'A large bird of prey',FLAME:'Hot burning light',GRAPE:'Small fruit in clusters',HAPPY:'Full of joy',IMAGE:'A picture or photo',JUDGE:'Makes legal rulings',KNIFE:'A sharp cutting tool',LEMON:'Sour yellow citrus',MAGIC:'Supernatural power',NIGHT:'After the sun sets',OCEAN:'The vast sea',PEACE:'Absence of conflict',QUEEN:'Female monarch',RIVER:'Flowing body of water',SMILE:'Curve of happiness',TIGER:'Striped wild cat',UNION:'Coming together',VOICE:'Sound you speak with',WATER:'H2O',YOUNG:'Not old',CANDY:'Sweet sugary treat',BLANK:'Empty space',CEDAR:'A type of tree',EIGHT:'Number after seven',HORSE:'Animal you ride',KITTY:'A baby cat'},
+  medium:{BLIZZARD:'Heavy snowstorm',CALENDAR:'Tracks the days',CHAMPION:'The winner',DAUGHTER:'Female child',ELEPHANT:'Largest land animal',FESTIVAL:'A big celebration',GRAPHITE:'Pencil material',HOSPITAL:'Where doctors work',JEALOUSY:'Feeling envious',KEYBOARD:'Used for typing',LANGUAGE:'How we communicate',MECHANIC:'Fixes engines',NOTEBOOK:'You write in this',OBSTACLE:'Something in your way',PLATFORM:'A raised surface',QUANTITY:'An amount or number',REGIMENT:'Military unit',SATURDAY:'Weekend day',TOGETHER:'As one',UMBRELLA:'Keeps off the rain',VALUABLE:'Worth a lot',WHATEVER:'Anything at all',EXERCISE:'Physical activity',YOURSELF:'You, personally',ABSOLUTE:'Complete and total'},
+  hard:{ALGORITHM:'Step by step process',BANKRUPTCY:'Financial ruin',CONSEQUENCE:'Result of an action',DEVELOPMENT:'Process of growth',ELECTRICITY:'Powers your devices',FUNDAMENTAL:'A basic principle',GOVERNMENT:'Runs a country',HYPOTHESIS:'A scientific theory',IMPOSSIBLE:'Cannot be done',JOURNALISM:'Reporting the news',LEGISLATURE:'Makes the laws',MANUFACTURE:'To produce goods',NEIGHBORHOOD:'Where you live',OPPORTUNITY:'A chance to act',PHILOSOPHER:'Lover of wisdom',RESPONSIBLE:'Being accountable',SUSTAINABLE:'Long-term viable',TEMPERATURE:'Measure of heat',UNDERGROUND:'Below the surface',VEGETABLES:'Edible plants',WAVELENGTH:'Wave measurement',XENOPHOBIA:'Fear of outsiders',YOUNGSTERS:'Young people',ZOOLOGICAL:'Relating to animals',ARCHITECTURE:'Design of buildings'}
+};
+
+// ═══════════════════════════════════════
+// GLOBAL STATE
+// ═══════════════════════════════════════
+let mode='', diff='easy', isTwoPlayer=false, p1Word='';
+let stats=JSON.parse(localStorage.getItem('pw-stats')||'{"wins":0,"streak":0,"best":0}');
+
+// Wordle state
+let wAnswer='',wRow=0,wCol=0,wGrid=[],wOver=false,wKeys={};
+// Hangman state
+let hAnswer='',hGuessed=[],hWrong=0,hOver=false;
+// Scramble state
+let scWords=[],scIdx=0,scAnswer='',scScore=0,scStreak=0,scTimer=null,scTime=30,scHintUsed=false,scTwoPlayer=false,scP1Words=[];
+
+// ═══════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════
+function shuffle(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]];}return b;}
+function seeded(seed){let s=seed%2147483647;return()=>{s=s*16807%2147483647;return(s-1)/2147483646;};}
+function getDailyWord(){const d=new Date();const rng=seeded(d.getFullYear()*10000+d.getMonth()*100+d.getDate());const pool=WORDS[diff].wordle;return pool[Math.floor(rng()*pool.length)];}
+function saveStats(){localStorage.setItem('pw-stats',JSON.stringify(stats));}
+function updateScoreBar(){document.getElementById('total-wins').textContent=stats.wins;document.getElementById('total-streak').textContent=stats.streak;document.getElementById('total-best').textContent=stats.best;}
+function showMsg(id,text,type){const el=document.getElementById(id);el.textContent=text;el.className=`msg-box ${type}`;el.style.display='block';}
+function hideMsg(id){document.getElementById(id).style.display='none';}
+function hide(...ids){ids.forEach(id=>document.getElementById(id).style.display='none');}
+function show(id,disp='block'){document.getElementById(id).style.display=disp;}
+
+// ═══════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════
+function showMenu(){
+  clearInterval(scTimer);
+  document.removeEventListener('keydown',wKeydown);
+  hide('player-select','p1-screen','handoff-screen','game-area');
+  show('menu');
+}
+function pickMode(m){
+  mode=m;
+  hide('menu');
+  document.getElementById('ps-title').textContent=`> ${m.toUpperCase()}: HOW MANY PLAYERS?`;
+  show('player-select');
+}
+function showPlayerSelect(){hide('p1-screen','handoff-screen');show('player-select');}
+function showMenu_(){showMenu();}
+
+function chooseMode(twoPlayer){
+  isTwoPlayer=twoPlayer;
+  hide('player-select');
+  if(twoPlayer){
+    setupP1Screen();
+  } else {
+    startActualGame();
+  }
+}
+
+// ═══════════════════════════════════════
+// P1 WORD ENTRY
+// ═══════════════════════════════════════
+const P1_CONFIG={
+  wordle:{title:'PLAYER 1: SET THE WORD',color:'green',sub:'Type a 5-letter word for Player 2 to guess.',hint:'Must be exactly <span>5 letters</span>, A–Z only.',btnColor:'green',validate:w=>w.length===5&&/^[A-Z]+$/.test(w),errMsg:'Word must be exactly 5 letters!'},
+  hangman:{title:'PLAYER 1: SET THE WORD',color:'red',sub:'Type a word for Player 2 to guess letter by letter.',hint:'Between <span>3–12 letters</span>, A–Z only.',btnColor:'red',validate:w=>w.length>=3&&w.length<=12&&/^[A-Z]+$/.test(w),errMsg:'Word must be 3–12 letters, A–Z only!'},
+  scramble:{title:'PLAYER 1: SET THE WORD',color:'purple',sub:'Type a word for Player 2 to unscramble. Add up to 5 words!',hint:'Between <span>3–15 letters</span>. Press SET WORD to add more.',btnColor:'purple',validate:w=>w.length>=3&&w.length<=15&&/^[A-Z]+$/.test(w),errMsg:'Word must be 3–15 letters, A–Z only!'}
+};
+let p1Visible=false, scrambleP1List=[];
+
+function setupP1Screen(){
+  scrambleP1List=[];
+  const cfg=P1_CONFIG[mode];
+  const t=document.getElementById('p1-title');
+  t.textContent=cfg.title; t.className=`p1-title ${cfg.color}`;
+  document.getElementById('p1-sub').textContent=cfg.sub;
+  document.getElementById('p1-hint').innerHTML=cfg.hint;
+  document.getElementById('p1-error').textContent='';
+  document.getElementById('p1-input').value='';
+  p1Visible=false;
+  document.getElementById('p1-input').type='password';
+  updateP1SubmitBtn();
+  show('p1-screen');
+}
+
+function updateP1SubmitBtn(){
+  const btn=document.getElementById('p1-submit-btn');
+  if(mode==='scramble'&&scrambleP1List.length>0){
+    btn.textContent=`ADD WORD (${scrambleP1List.length}) / DONE ▶`;
+    document.getElementById('p1-hint').innerHTML=`<span>${scrambleP1List.length}</span> word(s) added. Type another to add, or leave blank &amp; press DONE.`;
+  }
+}
+
+function toggleP1Vis(){
+  p1Visible=!p1Visible;
+  document.getElementById('p1-input').type=p1Visible?'text':'password';
+  document.getElementById('p1-toggle').textContent=p1Visible?'🙈':'👁';
+}
+
+function p1Submit(){
+  const val=document.getElementById('p1-input').value.trim().toUpperCase();
+  const cfg=P1_CONFIG[mode];
+
+  if(mode==='scramble'){
+    // Empty input + at least 1 word already = DONE
+    if(val===''&&scrambleP1List.length>0){showHandoff();return;}
+    if(!cfg.validate(val)){document.getElementById('p1-error').textContent=cfg.errMsg;return;}
+    document.getElementById('p1-error').textContent='';
+    scrambleP1List.push(val);
+    document.getElementById('p1-input').value='';
+    document.getElementById('p1-input').focus();
+    updateP1SubmitBtn();
+    if(scrambleP1List.length>=5){p1Word=scrambleP1List[0];showHandoff();}
+    return;
+  }
+
+  if(!cfg.validate(val)){document.getElementById('p1-error').textContent=cfg.errMsg;return;}
+  document.getElementById('p1-error').textContent='';
+  p1Word=val;
+  showHandoff();
+}
+
+function showHandoff(){
+  hide('p1-screen');
+  const msgs={
+    wordle:'Word is locked in.\nHand the device to Player 2!',
+    hangman:'Word is set!\nHand the device to Player 2.',
+    scramble:`${mode==='scramble'&&scrambleP1List.length>1?scrambleP1List.length+' words set!':'Word is set!'}\nHand the device to Player 2.`
+  };
+  document.getElementById('handoff-sub').textContent=msgs[mode]||'Word set! Pass to Player 2.';
+  show('handoff-screen');
+}
+
+function startActualGame(){
+  hide('handoff-screen','player-select','p1-screen','menu');
+  show('game-area');
+
+  const colors={wordle:'green',hangman:'red',scramble:'purple'};
+  const t=document.getElementById('game-title');
+  t.textContent=mode.toUpperCase(); t.className=`game-title ${colors[mode]}`;
+
+  const badge=document.getElementById('player-badge');
+  if(isTwoPlayer){badge.textContent='P2 GUESSING';badge.className='player-badge p2';}
+  else{badge.textContent='1 PLAYER';badge.className='player-badge solo';}
+
+  hide('wordle-area','hangman-area','scramble-area');
+  const showDiff=!isTwoPlayer&&mode!=='wordle';
+  document.getElementById('diff-row').style.display=showDiff?'flex':'none';
+
+  if(mode==='wordle') initWordle();
+  else if(mode==='hangman') initHangman();
+  else initScramble();
+}
+
+function restartCurrent(){
+  if(isTwoPlayer){
+    // go back to p1 entry
+    hide('game-area');
+    setupP1Screen();
+    show('p1-screen');
+  } else {
+    if(mode==='wordle') newWordleGame();
+    else if(mode==='hangman') newHangmanGame();
+    else initScramble();
+  }
+}
+
+function setDiff(d,btn){
+  diff=d;
+  document.querySelectorAll('.diff-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  if(mode==='hangman') newHangmanGame();
+  else if(mode==='scramble') initScramble();
+}
+
+// ═══════════════════════════════════════
+// WORDLE
+// ═══════════════════════════════════════
+function initWordle(){
+  show('wordle-area');
+  newWordleGame();
+  document.addEventListener('keydown',wKeydown);
+}
+function newWordleGame(){
+  wAnswer=isTwoPlayer?p1Word:getDailyWord();
+  wRow=0;wCol=0;wOver=false;wKeys={};
+  hideMsg('wordle-msg');
+  hide('wordle-btns');
+  buildWordleGrid(); buildWordleKeys();
+}
+function buildWordleGrid(){
+  wGrid=[];
+  const g=document.getElementById('wordle-grid'); g.innerHTML='';
+  for(let r=0;r<6;r++){
+    const row=document.createElement('div'); row.className='wordle-row'; row.id=`wr${r}`;
+    const ra=[];
+    for(let c=0;c<5;c++){
+      const cell=document.createElement('div');
+      cell.className='wordle-cell'+(r===0?' active-row':'');
+      cell.id=`wc${r}${c}`; row.appendChild(cell); ra.push(cell);
+    }
+    g.appendChild(row); wGrid.push(ra);
+  }
+}
+const KR=[['Q','W','E','R','T','Y','U','I','O','P'],['A','S','D','F','G','H','J','K','L'],['ENTER','Z','X','C','V','B','N','M','⌫']];
+function buildWordleKeys(){
+  wKeys={};
+  KR.forEach((row,i)=>{
+    const kr=document.getElementById(`kr${i+1}`); kr.innerHTML='';
+    row.forEach(k=>{
+      const btn=document.createElement('button');
+      btn.className='key'+(['ENTER','⌫'].includes(k)?' wide':'');
+      btn.textContent=k; btn.id=`key-${k}`;
+      btn.onclick=()=>wInput(k);
+      kr.appendChild(btn); wKeys[k]=btn;
+    });
+  });
+}
+function wKeydown(e){
+  if(mode!=='wordle'||wOver) return;
+  const active=document.getElementById('game-area');
+  if(!active||active.style.display==='none') return;
+  if(e.key==='Enter') wInput('ENTER');
+  else if(e.key==='Backspace') wInput('⌫');
+  else if(/^[a-zA-Z]$/.test(e.key)) wInput(e.key.toUpperCase());
+}
+function wInput(k){
+  if(wOver) return;
+  if(k==='⌫'){if(wCol>0){wCol--;wGrid[wRow][wCol].textContent='';wGrid[wRow][wCol].classList.remove('filled');}}
+  else if(k==='ENTER') wSubmit();
+  else if(wCol<5&&k.length===1){wGrid[wRow][wCol].textContent=k;wGrid[wRow][wCol].classList.add('filled');wCol++;}
+}
+function wSubmit(){
+  if(wCol<5){shakeRow(wRow);showMsg('wordle-msg','NOT ENOUGH LETTERS','info');setTimeout(()=>hideMsg('wordle-msg'),1200);return;}
+  const guess=wGrid[wRow].map(c=>c.textContent).join('');
+  const result=scoreWord(guess,wAnswer);
+  result.forEach((r,i)=>{
+    setTimeout(()=>{
+      const c=wGrid[wRow][i]; c.classList.add(r);
+      const k=guess[i], cur=wKeys[k]?.classList;
+      if(cur&&!cur.contains('correct')){
+        if(r==='correct') cur.add('correct');
+        else if(r==='present'&&!cur.contains('correct')) cur.add('present');
+        else if(r==='absent'&&!cur.contains('correct')&&!cur.contains('present')) cur.add('absent');
+      }
+    },i*110);
+  });
+  const won=guess===wAnswer;
+  setTimeout(()=>{
+    if(won){
+      stats.wins++;stats.streak++;if(stats.streak>stats.best)stats.best=stats.streak;saveStats();updateScoreBar();
+      const msgs=['GENIUS!','MAGNIFICENT!','IMPRESSIVE!','SPLENDID!','GREAT!','PHEW!'];
+      showMsg('wordle-msg',(isTwoPlayer?'P2 WINS! ':'')+msgs[wRow],'win');
+      show('wordle-btns','flex'); wOver=true; confetti();
+    } else if(wRow===5){
+      stats.streak=0;saveStats();updateScoreBar();
+      showMsg('wordle-msg',`GAME OVER · ANSWER: ${wAnswer}`,'lose');
+      show('wordle-btns','flex'); wOver=true;
+    } else {wRow++;wCol=0;wGrid[wRow].forEach(c=>c.classList.add('active-row'));}
+  },560);
+}
+function scoreWord(guess,answer){
+  const res=Array(5).fill('absent'),used=Array(5).fill(false);
+  [...guess].forEach((l,i)=>{if(l===answer[i]){res[i]='correct';used[i]=true;}});
+  [...guess].forEach((l,i)=>{
+    if(res[i]==='correct') return;
+    const j=[...answer].findIndex((a,idx)=>a===l&&!used[idx]);
+    if(j!==-1){res[i]='present';used[j]=true;}
+  });
+  return res;
+}
+function shakeRow(r){const row=document.getElementById(`wr${r}`);row.classList.add('shake');setTimeout(()=>row.classList.remove('shake'),500);}
+
+// ═══════════════════════════════════════
+// HANGMAN
+// ═══════════════════════════════════════
+const HG=[
+  ctx=>{ctx.beginPath();ctx.moveTo(40,180);ctx.lineTo(180,180);ctx.stroke();},
+  ctx=>{ctx.beginPath();ctx.moveTo(80,180);ctx.lineTo(80,20);ctx.stroke();},
+  ctx=>{ctx.beginPath();ctx.moveTo(80,20);ctx.lineTo(140,20);ctx.stroke();},
+  ctx=>{ctx.beginPath();ctx.moveTo(140,20);ctx.lineTo(140,45);ctx.stroke();},
+  ctx=>{ctx.beginPath();ctx.arc(140,58,13,0,Math.PI*2);ctx.stroke();},
+  ctx=>{ctx.beginPath();ctx.moveTo(140,71);ctx.lineTo(140,115);ctx.stroke();},
+  ctx=>{ctx.beginPath();ctx.moveTo(140,80);ctx.lineTo(118,100);ctx.stroke();ctx.beginPath();ctx.moveTo(140,80);ctx.lineTo(162,100);ctx.stroke();},
+  ctx=>{ctx.beginPath();ctx.moveTo(140,115);ctx.lineTo(118,145);ctx.stroke();ctx.beginPath();ctx.moveTo(140,115);ctx.lineTo(162,145);ctx.stroke();}
+];
+function initHangman(){show('hangman-area');newHangmanGame();}
+function newHangmanGame(){
+  hAnswer=isTwoPlayer?p1Word:shuffle(WORDS[diff].hang)[0];
+  hGuessed=[];hWrong=0;hOver=false;
+  hideMsg('hangman-msg');hide('hangman-btns');
+  drawHangman();renderLives();renderWordDisplay();buildAlpha();
+}
+function drawHangman(){
+  const cv=document.getElementById('hangman-canvas');
+  const ctx=cv.getContext('2d');
+  ctx.clearRect(0,0,cv.width,cv.height);
+  ctx.strokeStyle='#ff4466';ctx.lineWidth=3;ctx.lineCap='square';
+  for(let i=0;i<=hWrong&&i<HG.length;i++) HG[i](ctx);
+}
+function renderLives(){
+  const bar=document.getElementById('lives-bar'); bar.innerHTML='';
+  for(let i=0;i<7;i++){const l=document.createElement('div');l.className='life'+(i>=7-hWrong?' lost':'');bar.appendChild(l);}
+}
+function renderWordDisplay(){
+  const wd=document.getElementById('word-display'); wd.innerHTML='';
+  [...hAnswer].forEach(l=>{
+    const s=document.createElement('div');s.className='letter-slot';
+    s.textContent=(hGuessed.includes(l)||hOver)?l:'';wd.appendChild(s);
+  });
+}
+function buildAlpha(){
+  const alpha=document.getElementById('hangman-alpha'); alpha.innerHTML='';
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('').forEach(l=>{
+    const btn=document.createElement('button');btn.className='alpha-key';btn.textContent=l;
+    btn.onclick=()=>hGuess(l);
+    if(hGuessed.includes(l)){btn.disabled=true;btn.classList.add(hAnswer.includes(l)?'right':'wrong');}
+    alpha.appendChild(btn);
+  });
+}
+function hGuess(l){
+  if(hOver||hGuessed.includes(l)) return;
+  hGuessed.push(l);
+  document.querySelectorAll('.alpha-key').forEach(b=>{
+    if(b.textContent===l){b.disabled=true;b.classList.add(hAnswer.includes(l)?'right':'wrong');}
+  });
+  if(!hAnswer.includes(l)){hWrong++;drawHangman();renderLives();}
+  renderWordDisplay();
+  const won=[...hAnswer].every(c=>hGuessed.includes(c));
+  if(won){
+    stats.wins++;stats.streak++;if(stats.streak>stats.best)stats.best=stats.streak;saveStats();updateScoreBar();
+    showMsg('hangman-msg',(isTwoPlayer?'P2 WINS! ':'')+'YOU SURVIVED! 💀','win');
+    show('hangman-btns','flex');hOver=true;confetti();
+  } else if(hWrong>=7){
+    stats.streak=0;saveStats();updateScoreBar();
+    showMsg('hangman-msg',`HANGED! WORD WAS: ${hAnswer}`,'lose');
+    show('hangman-btns','flex');hOver=true;hGuessed=[...hAnswer];renderWordDisplay();
+  }
+}
+
+// ═══════════════════════════════════════
+// SCRAMBLE
+// ═══════════════════════════════════════
+const SC_TIME={easy:40,medium:30,hard:20};
+function initScramble(){
+  show('scramble-area');
+  scScore=0;scStreak=0;
+  if(isTwoPlayer){
+    scWords=shuffle([...scrambleP1List]);
+  } else {
+    scWords=shuffle(WORDS[diff].scramble);
+  }
+  scIdx=0;updateScStats();newScrambleRound();
+  document.getElementById('scramble-input').onkeydown=e=>{if(e.key==='Enter')checkScramble();};
+  document.getElementById('hint-btn').style.display=isTwoPlayer?'none':'inline-block';
+}
+function newScrambleRound(){
+  if(scIdx>=scWords.length){
+    if(isTwoPlayer){scWords=shuffle([...scrambleP1List]);}
+    else{scWords=shuffle(WORDS[diff].scramble);}
+    scIdx=0;
+  }
+  scAnswer=scWords[scIdx++];scHintUsed=false;
+  document.getElementById('scramble-word').textContent=scrambleStr(scAnswer);
+  document.getElementById('scramble-hint-txt').textContent='';
+  document.getElementById('scramble-input').value='';
+  document.getElementById('scramble-input').focus();
+  hideMsg('scramble-msg');
+  startScTimer();
+}
+function scrambleStr(w){const a=[...w];let s;do{s=shuffle(a).join('');}while(s===w&&w.length>1);return s;}
+function startScTimer(){
+  clearInterval(scTimer);
+  scTime=isTwoPlayer?60:SC_TIME[diff];
+  document.getElementById('sc-time').textContent=scTime;
+  document.getElementById('timer-fill').style.width='100%';
+  scTimer=setInterval(()=>{
+    scTime--;
+    document.getElementById('sc-time').textContent=scTime;
+    document.getElementById('timer-fill').style.width=(scTime/(isTwoPlayer?60:SC_TIME[diff])*100)+'%';
+    if(scTime<=0){clearInterval(scTimer);scTimeUp();}
+  },1000);
+}
+function scTimeUp(){
+  scStreak=0;updateScStats();
+  showMsg('scramble-msg',`TIME UP! WORD: ${scAnswer}`,'lose');
+  setTimeout(()=>{hideMsg('scramble-msg');newScrambleRound();},1800);
+}
+function checkScramble(){
+  const val=document.getElementById('scramble-input').value.trim().toUpperCase();
+  if(!val) return;
+  if(val===scAnswer){
+    clearInterval(scTimer);
+    const pts=isTwoPlayer?10:(scHintUsed?5:10+(diff==='hard'?10:diff==='medium'?5:0));
+    scScore+=pts;scStreak++;
+    if(scStreak>stats.best)stats.best=scStreak;
+    stats.wins++;stats.streak++;saveStats();updateScoreBar();
+    updateScStats();
+    showMsg('scramble-msg',`+${pts} PTS! CORRECT! ✓`,'win');
+    confetti();
+    setTimeout(()=>{hideMsg('scramble-msg');newScrambleRound();},1000);
+  } else {
+    document.getElementById('scramble-input').classList.add('shake');
+    setTimeout(()=>document.getElementById('scramble-input').classList.remove('shake'),400);
+    showMsg('scramble-msg','WRONG! TRY AGAIN','lose');
+    setTimeout(()=>hideMsg('scramble-msg'),800);
+  }
+}
+function scrambleHint(){
+  if(isTwoPlayer) return;
+  const h=(HINTS[diff]||{})[scAnswer];
+  scHintUsed=true;
+  document.getElementById('scramble-hint-txt').textContent=h?`HINT: ${h}`:'HINT: think carefully...';
+}
+function scrambleSkip(){
+  clearInterval(scTimer);scStreak=0;updateScStats();
+  showMsg('scramble-msg',`SKIPPED · WAS: ${scAnswer}`,'info');
+  setTimeout(()=>{hideMsg('scramble-msg');newScrambleRound();},1400);
+}
+function updateScStats(){
+  document.getElementById('sc-score').textContent=scScore;
+  document.getElementById('sc-streak').textContent=scStreak;
+  document.getElementById('sc-time').textContent=scTime;
+}
+
+// ═══════════════════════════════════════
+// CONFETTI
+// ═══════════════════════════════════════
+function confetti(){
+  const cv=document.getElementById('confetti-cv');
+  cv.width=window.innerWidth;cv.height=window.innerHeight;
+  const ctx=cv.getContext('2d');
+  const p=Array.from({length:80},()=>({x:Math.random()*cv.width,y:-10,vx:(Math.random()-.5)*4,vy:Math.random()*4+2,c:['#00ff88','#ffd700','#ff4466','#44aaff','#bb66ff'][Math.floor(Math.random()*5)],s:Math.random()*8+4,r:Math.random()*360}));
+  let f=0;
+  (function draw(){ctx.clearRect(0,0,cv.width,cv.height);p.forEach(q=>{q.y+=q.vy;q.x+=q.vx;q.r+=3;ctx.save();ctx.translate(q.x,q.y);ctx.rotate(q.r*Math.PI/180);ctx.fillStyle=q.c;ctx.fillRect(-q.s/2,-q.s/2,q.s,q.s);ctx.restore();});if(++f<90)requestAnimationFrame(draw);else ctx.clearRect(0,0,cv.width,cv.height);})();
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+updateScoreBar();
+</script>
+</body>
+</html>
